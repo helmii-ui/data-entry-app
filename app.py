@@ -28,7 +28,8 @@ if submitted:
         temps_operation = int((t2 - t1).total_seconds() / 60)
 
         # 🔗 Envoi vers Sheety
-        sheety_endpoint = "https://api.sheety.co/your-id/your-sheet-name/data"  # 🔁 Mets ton vrai lien ici
+        sheety_endpoint = "https://api.sheety.co/2e31bbe32c21b55dd03dbf041b102e79/suiviDeMatelassage/feuille1"  # 👉 colle ici ton vrai lien
+"  # 🔁 Mets ton vrai lien ici
 
         new_row = {
             "data": {
