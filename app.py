@@ -52,31 +52,6 @@ if submitted:
         df.to_excel(file_path, index=False)
         st.success(f"✅ Données enregistrées avec succès ! Temps opération : {temps_operation} min")
         st.download_button("⬇️ Télécharger le fichier Excel", data=open(file_path, "rb"), file_name="donnees_saisies.xlsx")
-        import requests
-
-def send_to_sheety(date, client, orders, fabric, rollCode, length, plies, startTime, endTime, operationTime):
-    # 🟡 Replace the URL with your real Sheety API link
-    url = "https://api.sheety.co/2e31bbe32c21b55dd03dbf041b102e79/donnéesDeSuiviDeMatelassage/feuille1"
-
-    # This matches the column names in your Google Sheet
-    payload = data {
-            "Date": [date],
-            "Client": [client],
-            "N° commande": [commande],
-            "Tissu": [tissu],
-            "Code rouleau": [code_rouleau],
-            "Longueur matelas": [longueur],
-            "Nb plis": [nb_plis],
-            "Heure début": [heure_debut],
-            "Heure fin": [heure_fin],
-            "Temps opération (min)": [temps_operation]
-        }
-    }
-
-    # Sends the data to Google Sheets
-    response = requests.post(url, json=payload)
-    print("✅ Done:", response.status_code, response.text)
-
 
     except Exception as e:
         st.error("❌ Une erreur est survenue : " + str(e))
