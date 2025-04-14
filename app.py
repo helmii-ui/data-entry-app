@@ -59,18 +59,17 @@ def send_to_sheety(date, client, orders, fabric, rollCode, length, plies, startT
     url = "https://api.sheety.co/2e31bbe32c21b55dd03dbf041b102e79/donnéesDeSuiviDeMatelassage/feuille1"
 
     # This matches the column names in your Google Sheet
-    payload = {
-        "data": {
-            "date": date,
-            "client": client,
-            "orders": orders,
-            "fabric": fabric,
-            "rollCode": rollCode,
-            "length": length,
-            "plies": plies,
-            "startTime": startTime,
-            "endTime": endTime,
-            "operationTime": operationTime
+    payload = data {
+            "Date": [date],
+            "Client": [client],
+            "N° commande": [commande],
+            "Tissu": [tissu],
+            "Code rouleau": [code_rouleau],
+            "Longueur matelas": [longueur],
+            "Nb plis": [nb_plis],
+            "Heure début": [heure_debut],
+            "Heure fin": [heure_fin],
+            "Temps opération (min)": [temps_operation]
         }
     }
 
