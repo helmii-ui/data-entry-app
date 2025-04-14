@@ -49,9 +49,34 @@ if submitted:
             old_df = pd.read_excel(file_path)
             df = pd.concat([old_df, df], ignore_index=True)
         
-        df.to_excel(file_path, index=False)
-        st.success(f"✅ Données enregistrées avec succès ! Temps opération : {temps_operation} min")
-        st.download_button("⬇️ Télécharger le fichier Excel", data=open(file_path, "rb"), file_name="donnees_saisies.xlsx")
+       # Instead of saving to Excel, do this:
+import requests
+
+sheety_endpoint = "https://api.sheety.co/your-id/your-sheet-name/data"
+
+# Construct the row from your Streamlit inputs
+new_row = {
+    "data": {
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "client": client,
+        "numeroCommande": numero_commande,
+        "tissu": tissu,
+        "codeRouleau": code_rouleau,
+        "longueurMatelas": longueur_matelas,
+        "nbPlis": nb_plis,
+        "heureDebut": heure_debut.strftime("%H:%M"),
+        "heureFin": heure_fin.strftime("%H:%M"),
+        "tempsOperation": str(temps_operation)
+    }
+}
+
+response = requests.post(sheety_endpoint, json=new_row)
+
+if response.status_code == 201:
+    st.success("✅ Données enregistrées dans Google Sheets !")
+else:
+    st.error("❌ Échec d'enregistrement")
+")
 
     except Exception as e:
         st.error("❌ Une erreur est survenue : " + str(e))
