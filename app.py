@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import os
+import requests
 
 st.title("🧾 Interface de saisie de données - Coupage")
 
@@ -12,7 +12,7 @@ with st.form("saisie_form"):
     commande = st.text_input("N° commande")
     tissu = st.text_input("Tissu")
     code_rouleau = st.text_input("Code rouleau")
-    longueur = st.number_input("Longueur matelas (en mètres)", min_value=0)
+    longueur_matelas = st.number_input("Longueur matelas (en mètres)", min_value=0)
     nb_plis = st.number_input("Nombre de plis", min_value=0)
     heure_debut = st.time_input("Heure de début")
     heure_fin = st.time_input("Heure de fin")
@@ -26,83 +26,31 @@ if submitted:
         t1 = datetime.strptime(str(heure_debut), fmt)
         t2 = datetime.strptime(str(heure_fin), fmt)
         temps_operation = int((t2 - t1).total_seconds() / 60)
-        
-        new_data = {
-            "Date": [date],
-            "Client": [client],
-            "N° commande": [commande],
-            "Tissu": [tissu],
-            "Code rouleau": [code_rouleau],
-            "Longueur matelas": [longueur],
-            "Nb plis": [nb_plis],
-            "Heure début": [heure_debut],
-            "Heure fin": [heure_fin],
-            "Temps opération (min)": [temps_operation]
+
+        # 🔗 Envoi vers Sheety
+        sheety_endpoint = "https://api.sheety.co/2e31bbe32c21b55dd03dbf041b102e79/suiviDeMatelassage/feuille1"
+
+        new_row = {
+            "feuille1": {
+                "date": date.strftime("%Y-%m-%d"),
+                "client": client,
+                "numeroCommande": commande,
+                "tissu": tissu,
+                "codeRouleau": code_rouleau,
+                "longueurMatelas": longueur_matelas,
+                "nbPlis": nb_plis,
+                "heureDebut": heure_debut.strftime("%H:%M"),
+                "heureFin": heure_fin.strftime("%H:%M"),
+                "tempsOperation": str(temps_operation)
+            }
         }
 
-        df = pd.DataFrame(new_data)
+        response = requests.post(sheety_endpoint, json=new_row)
 
-        file_path = "donnees_saisies.xlsx"
-        
-        # Si fichier existe, on ajoute les nouvelles données
-        if os.path.exists(file_path):
-            old_df = pd.read_excel(file_path)
-            df = pd.concat([old_df, df], ignore_index=True)
-        
-        df.to_excel(file_path, index=False)
-        st.success(f"✅ Données enregistrées avec succès ! Temps opération : {temps_operation} min")
-        st.download_button("⬇️ Télécharger le fichier Excel", data=open(file_path, "rb"), file_name="donnees_saisies.xlsx")
+        if response.status_code == 201:
+            st.success("✅ Données enregistrées dans Google Sheets !")
+        else:
+            st.error(f"❌ Échec d'enregistrement : {response.text}")
 
     except Exception as e:
         st.error("❌ Une erreur est survenue : " + str(e))
-        import requests
-
-def send_to_sheety(date, client, orders, fabric, rollCode, length, plies, startTime, endTime, operationTime):
-    # 🟡 Replace the URL with your real Sheety API link
-    url = "import requests
-
-def send_to_sheety(date, client, orders, fabric, rollCode, length, plies, startTime, endTime, operationTime):
-    # 🟡 Replace the URL with your real Sheety API link
-    url = "https://api.sheety.co/2e31bbe32c21b55dd03dbf041b102e79/donnéesDeSuiviDeMatelassage/feuille1"
-
-    # This matches the column names in your Google Sheet
-    payload = {
-        "data": {
-            "date": date,
-            "client": client,
-            "orders": orders,
-            "fabric": fabric,
-            "rollCode": rollCode,
-            "length": length,
-            "plies": plies,
-            "startTime": startTime,
-            "endTime": endTime,
-            "operationTime": operationTime
-        }
-    }
-
-    # Sends the data to Google Sheets
-    response = requests.post(url, json=payload)
-    print("✅ Done:", response.status_code, response.text)
-"
-
-    # This matches the column names in your Google Sheet
-    payload = {
-        "data": {
-            "date": date,
-            "client": client,
-            "orders": orders,
-            "fabric": fabric,
-            "rollCode": rollCode,
-            "length": length,
-            "plies": plies,
-            "startTime": startTime,
-            "endTime": endTime,
-            "operationTime": operationTime
-        }
-    }
-
-    # Sends the data to Google Sheets
-    response = requests.post(url, json=payload)
-    print("✅ Done:", response.status_code, response.text)
-
