@@ -1,8 +1,9 @@
+pip install streamlit pandas openpyxl
 import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-pip install streamlit pandas openpyxl
+
 
 
 # --- Fichier Excel ---
