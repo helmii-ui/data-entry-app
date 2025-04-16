@@ -55,3 +55,29 @@ if submitted:
 
     except Exception as e:
         st.error("❌ Une erreur est survenue : " + str(e))
+        import requests
+
+def send_to_sheety(date, client, orders, fabric, rollCode, length, plies, startTime, endTime, operationTime):
+    # 🟡 Replace the URL with your real Sheety API link
+    url = "https://api.sheety.co/your_project_id/project_name/data"
+
+    # This matches the column names in your Google Sheet
+    payload = {
+        "data": {
+            "date": date,
+            "client": client,
+            "orders": orders,
+            "fabric": fabric,
+            "rollCode": rollCode,
+            "length": length,
+            "plies": plies,
+            "startTime": startTime,
+            "endTime": endTime,
+            "operationTime": operationTime
+        }
+    }
+
+    # Sends the data to Google Sheets
+    response = requests.post(url, json=payload)
+    print("✅ Done:", response.status_code, response.text)
+
