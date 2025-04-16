@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
+pip install streamlit pandas openpyxl
+
 
 # --- Fichier Excel ---
 FICHIER = "donnees.xlsx"
@@ -36,8 +38,9 @@ with st.form("formulaire_saisie"):
 
     envoyer = st.form_submit_button("✅ Enregistrer")
 
-    if envoyer:
+       if envoyer:
         try:
+            # Calcul de la durée
             fmt = "%H:%M"
             h_debut = datetime.strptime(heure_debut, fmt)
             h_fin = datetime.strptime(heure_fin, fmt)
@@ -48,7 +51,6 @@ with st.form("formulaire_saisie"):
             minutes = reste // 60
             duree_str = f"{heures:02}:{minutes:02}"
 
-            # --- Ajouter les données ---
             nouvelle_ligne = pd.DataFrame([[
                 date, client, commandes, tissu, code_rouleau,
                 longueur, plis, heure_debut, heure_fin, duree_str
@@ -57,12 +59,18 @@ with st.form("formulaire_saisie"):
                 "Longueur de matelas", "Nombre de plis", "Heure de début", "Heure de fin", "Durée opération"
             ])
 
-            df = pd.read_excel(FICHIER)
+            # Lecture de l'existant
+            try:
+                df = pd.read_excel(FICHIER)
+            except FileNotFoundError:
+                df = pd.DataFrame(columns=nouvelle_ligne.columns)
+
+            # Ajout et sauvegarde
             df = pd.concat([df, nouvelle_ligne], ignore_index=True)
             df.to_excel(FICHIER, index=False)
 
-            st.success("✅ Données enregistrées avec succès !")
+            st.success(f"✅ Données enregistrées dans le fichier : {FICHIER}")
             st.balloons()
 
         except Exception as e:
-            st.error(f"⚠️ Erreur de format d'heure : {e}")
+            st.error(f"❌ Une erreur est survenue : {e}")
