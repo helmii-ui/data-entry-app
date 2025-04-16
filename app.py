@@ -28,7 +28,7 @@ if submitted:
         temps_operation = int((t2 - t1).total_seconds() / 60)
 
         # 🔗 Envoi vers Sheety
-        sheety_endpoint = "https://api.sheety.co/2e31bbe32c21b55dd03dbf041b102e79/suiviDeMatelassage/feuille1"
+        sheety_endpoint = "https://api.sheety.co/2e31bbe32c21b55dd03dbf041b102e79/donnéesDeSuiviDeMatelassage/feuille1"
 
         new_row = {
             "feuille1": {
