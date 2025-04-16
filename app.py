@@ -1,57 +1,69 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 import os
+from datetime import datetime
 
-st.title("🧾 Interface de saisie de données - Coupage")
+# --- Fichier Excel ---
+FILE_PATH = "donnee.xlsx"
 
-# 🖊️ Champs de formulaire
-with st.form("saisie_form"):
-    date = st.date_input("Date")
-    client = st.text_input("Client")
-    commande = st.text_input("N° commande")
-    tissu = st.text_input("Tissu")
-    code_rouleau = st.text_input("Code rouleau")
-    longueur = st.number_input("Longueur matelas (en mètres)", min_value=0)
-    nb_plis = st.number_input("Nombre de plis", min_value=0)
-    heure_debut = st.time_input("Heure de début")
-    heure_fin = st.time_input("Heure de fin")
-    
-    submitted = st.form_submit_button("📥 Enregistrer")
+# --- Initialiser fichier s'il n'existe pas ---
+if not os.path.exists(FILE_PATH):
+    df = pd.DataFrame(columns=[
+        "Date", "Client", "Orders", "Fabric", "Roll Code",
+        "Length", "Plies", "Start Time", "End Time", "Operation Time"
+    ])
+    df.to_excel(FILE_PATH, index=False)
 
-if submitted:
-    try:
-        # 🧮 Calcul du temps d'opération
-        fmt = "%H:%M:%S"
-        t1 = datetime.strptime(str(heure_debut), fmt)
-        t2 = datetime.strptime(str(heure_fin), fmt)
-        temps_operation = int((t2 - t1).total_seconds() / 60)
-        
-        new_data = {
-            "Date": [date],
-            "Client": [client],
-            "N° commande": [commande],
-            "Tissu": [tissu],
-            "Code rouleau": [code_rouleau],
-            "Longueur matelas": [longueur],
-            "Nb plis": [nb_plis],
-            "Heure début": [heure_debut],
-            "Heure fin": [heure_fin],
-            "Temps opération (min)": [temps_operation]
-        }
+# --- Titre ---
+st.title("🧾 Interface de saisie de données")
 
-        df = pd.DataFrame(new_data)
+# --- Champs du formulaire ---
+with st.form("data_entry_form"):
+    col1, col2 = st.columns(2)
 
-        file_path = "donnees_saisies.xlsx"
-        
-        # Si fichier existe, on ajoute les nouvelles données
-        if os.path.exists(file_path):
-            old_df = pd.read_excel(file_path)
-            df = pd.concat([old_df, df], ignore_index=True)
-        
-        df.to_excel(file_path, index=False)
-        st.success(f"✅ Données enregistrées avec succès ! Temps opération : {temps_operation} min")
-        st.download_button("⬇️ Télécharger le fichier Excel", data=open(file_path, "rb"), file_name="donnees_saisies.xlsx")
+    with col1:
+        date = st.text_input("Date", value=datetime.now().strftime("%Y-%m-%d"))
+        client = st.text_input("Client")
+        orders = st.number_input("Orders", min_value=0)
+        fabric = st.text_input("Fabric")
+        roll_code = st.text_input("Roll Code")
 
-    except Exception as e:
-        st.error("❌ Une erreur est survenue : " + str(e))
+    with col2:
+        length = st.number_input("Length", min_value=0.0)
+        plies = st.number_input("Plies", min_value=0)
+        start_time = st.text_input("Start Time (HH:MM)")
+        end_time = st.text_input("End Time (HH:MM)")
+
+    submitted = st.form_submit_button("✅ Envoyer")
+
+    if submitted:
+        # --- Calcul de durée ---
+        try:
+            fmt = "%H:%M"
+            start_dt = datetime.strptime(start_time, fmt)
+            end_dt = datetime.strptime(end_time, fmt)
+            if end_dt < start_dt:
+                end_dt = end_dt.replace(day=start_dt.day + 1)
+            duration = end_dt - start_dt
+            hours, remainder = divmod(duration.seconds, 3600)
+            minutes = remainder // 60
+            op_time = f"{hours:02}:{minutes:02}"
+
+            # --- Ajouter les données ---
+            new_row = pd.DataFrame([[
+                date, client, orders, fabric, roll_code,
+                length, plies, start_time, end_time, op_time
+            ]], columns=[
+                "Date", "Client", "Orders", "Fabric", "Roll Code",
+                "Length", "Plies", "Start Time", "End Time", "Operation Time"
+            ])
+
+            df = pd.read_excel(FILE_PATH)
+            df = pd.concat([df, new_row], ignore_index=True)
+            df.to_excel(FILE_PATH, index=False)
+
+            st.success("✅ Données enregistrées avec succès !")
+            st.balloons()
+
+        except Exception as e:
+            st.error(f"⚠️ Erreur de format d'heure : {e}")
