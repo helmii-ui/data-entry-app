@@ -4,63 +4,62 @@ import os
 from datetime import datetime
 
 # --- Fichier Excel ---
-FILE_PATH = "donnee.xlsx"
+FICHIER = "donnees.xlsx"
 
-# --- Initialiser fichier s'il n'existe pas ---
-if not os.path.exists(FILE_PATH):
+# --- Créer le fichier s'il n'existe pas ---
+if not os.path.exists(FICHIER):
     df = pd.DataFrame(columns=[
-        "Date", "Client", "Orders", "Fabric", "Roll Code",
-        "Length", "Plies", "Start Time", "End Time", "Operation Time"
+        "Date", "Client", "Nombre de commandes", "Tissu", "Code rouleau",
+        "Longueur de matelas", "Nombre de plis", "Heure de début", "Heure de fin", "Durée opération"
     ])
-    df.to_excel(FILE_PATH, index=False)
+    df.to_excel(FICHIER, index=False)
 
 # --- Titre ---
-st.title("🧾 Interface de saisie de données")
+st.title("📋 Formulaire de Saisie de Données (Textile)")
 
-# --- Champs du formulaire ---
-with st.form("data_entry_form"):
+# --- Formulaire ---
+with st.form("formulaire_saisie"):
     col1, col2 = st.columns(2)
 
     with col1:
         date = st.text_input("Date", value=datetime.now().strftime("%Y-%m-%d"))
         client = st.text_input("Client")
-        orders = st.number_input("Orders", min_value=0)
-        fabric = st.text_input("Fabric")
-        roll_code = st.text_input("Roll Code")
+        commandes = st.number_input("Nombre de commandes", min_value=0)
+        tissu = st.text_input("Tissu")
+        code_rouleau = st.text_input("Code rouleau")
 
     with col2:
-        length = st.number_input("Length", min_value=0.0)
-        plies = st.number_input("Plies", min_value=0)
-        start_time = st.text_input("Start Time (HH:MM)")
-        end_time = st.text_input("End Time (HH:MM)")
+        longueur = st.number_input("Longueur de matelas (m)", min_value=0.0)
+        plis = st.number_input("Nombre de plis", min_value=0)
+        heure_debut = st.text_input("Heure de début (HH:MM)")
+        heure_fin = st.text_input("Heure de fin (HH:MM)")
 
-    submitted = st.form_submit_button("✅ Envoyer")
+    envoyer = st.form_submit_button("✅ Enregistrer")
 
-    if submitted:
-        # --- Calcul de durée ---
+    if envoyer:
         try:
             fmt = "%H:%M"
-            start_dt = datetime.strptime(start_time, fmt)
-            end_dt = datetime.strptime(end_time, fmt)
-            if end_dt < start_dt:
-                end_dt = end_dt.replace(day=start_dt.day + 1)
-            duration = end_dt - start_dt
-            hours, remainder = divmod(duration.seconds, 3600)
-            minutes = remainder // 60
-            op_time = f"{hours:02}:{minutes:02}"
+            h_debut = datetime.strptime(heure_debut, fmt)
+            h_fin = datetime.strptime(heure_fin, fmt)
+            if h_fin < h_debut:
+                h_fin = h_fin.replace(day=h_debut.day + 1)
+            duree = h_fin - h_debut
+            heures, reste = divmod(duree.seconds, 3600)
+            minutes = reste // 60
+            duree_str = f"{heures:02}:{minutes:02}"
 
             # --- Ajouter les données ---
-            new_row = pd.DataFrame([[
-                date, client, orders, fabric, roll_code,
-                length, plies, start_time, end_time, op_time
+            nouvelle_ligne = pd.DataFrame([[
+                date, client, commandes, tissu, code_rouleau,
+                longueur, plis, heure_debut, heure_fin, duree_str
             ]], columns=[
-                "Date", "Client", "Orders", "Fabric", "Roll Code",
-                "Length", "Plies", "Start Time", "End Time", "Operation Time"
+                "Date", "Client", "Nombre de commandes", "Tissu", "Code rouleau",
+                "Longueur de matelas", "Nombre de plis", "Heure de début", "Heure de fin", "Durée opération"
             ])
 
-            df = pd.read_excel(FILE_PATH)
-            df = pd.concat([df, new_row], ignore_index=True)
-            df.to_excel(FILE_PATH, index=False)
+            df = pd.read_excel(FICHIER)
+            df = pd.concat([df, nouvelle_ligne], ignore_index=True)
+            df.to_excel(FICHIER, index=False)
 
             st.success("✅ Données enregistrées avec succès !")
             st.balloons()
