@@ -1,77 +1,87 @@
-pip install streamlit pandas openpyxl
+!pip install streamlit pandas openpyxl pyngrok
+%%writefile app.py
 import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
+from pathlib import Path
 
+# === Config ===
+DRIVE_PATH = "/content/drive/MyDrive/matelas_data.xlsx"
+LOCAL_PATH = "/content/matelas_data.xlsx"
 
+# === Dropdown Options ===
+CLIENTS = ["Decathlon", "Benetton", "Zara", "Autre"]
+TISSUS = ["Coton", "Polyester", "Élasthanne", "Autre"]
 
-# --- Fichier Excel ---
-FICHIER = "donnees.xlsx"
+# === Init Excel File ===
+def init_excel():
+    if not os.path.exists(DRIVE_PATH):
+        df = pd.DataFrame(columns=[
+            "Date", "Client", "N° Commande", "Tissu", "Code Rouleau",
+            "Longueur Matelas", "Nombre de Plis", "Heure Début", "Heure Fin", "Temps Opération"
+        ])
+        df.to_excel(DRIVE_PATH, index=False)
+    if not os.path.exists(LOCAL_PATH):
+        pd.read_excel(DRIVE_PATH).to_excel(LOCAL_PATH, index=False)
 
-# --- Créer le fichier s'il n'existe pas ---
-if not os.path.exists(FICHIER):
-    df = pd.DataFrame(columns=[
-        "Date", "Client", "Nombre de commandes", "Tissu", "Code rouleau",
-        "Longueur de matelas", "Nombre de plis", "Heure de début", "Heure de fin", "Durée opération"
-    ])
-    df.to_excel(FICHIER, index=False)
+init_excel()
 
-# --- Titre ---
-st.title("📋 Formulaire de Saisie de Données (Textile)")
+# === Load Existing Data ===
+def load_data():
+    return pd.read_excel(DRIVE_PATH)
 
-# --- Formulaire ---
-with st.form("formulaire_saisie"):
-    col1, col2 = st.columns(2)
+# === Save Entry ===
+def save_entry(data):
+    df = load_data()
+    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
+    df.to_excel(DRIVE_PATH, index=False)
+    df.to_excel(LOCAL_PATH, index=False)
 
-    with col1:
-        date = st.text_input("Date", value=datetime.now().strftime("%Y-%m-%d"))
-        client = st.text_input("Client")
-        commandes = st.number_input("Nombre de commandes", min_value=0)
-        tissu = st.text_input("Tissu")
-        code_rouleau = st.text_input("Code rouleau")
+# === Streamlit App ===
+st.set_page_config(page_title="Saisie Matelas", layout="centered")
 
-    with col2:
-        longueur = st.number_input("Longueur de matelas (m)", min_value=0.0)
-        plis = st.number_input("Nombre de plis", min_value=0)
-        heure_debut = st.text_input("Heure de début (HH:MM)")
-        heure_fin = st.text_input("Heure de fin (HH:MM)")
+st.markdown("<h1 style='color:green;'>Formulaire de Saisie</h1>", unsafe_allow_html=True)
+st.write("Remplissez les champs suivants pour enregistrer les opérations.")
 
-    envoyer = st.form_submit_button("✅ Enregistrer")
+with st.form("formulaire"):
+    date = st.date_input("Date")
+    client = st.selectbox("Client", CLIENTS)
+    commande = st.text_input("N° Commande")
+    tissu = st.selectbox("Tissu", TISSUS)
+    code_rouleau = st.text_input("Code Rouleau")
+    longueur = st.number_input("Longueur Matelas (m)", step=0.1)
+    plis = st.number_input("Nombre de Plis", step=1)
+    heure_debut = st.text_input("Heure Début (HH:MM)")
+    heure_fin = st.text_input("Heure Fin (HH:MM)")
 
-       if envoyer:
+    submitted = st.form_submit_button("Enregistrer")
+
+    if submitted:
         try:
-            # Calcul de la durée
-            fmt = "%H:%M"
-            h_debut = datetime.strptime(heure_debut, fmt)
-            h_fin = datetime.strptime(heure_fin, fmt)
-            if h_fin < h_debut:
-                h_fin = h_fin.replace(day=h_debut.day + 1)
-            duree = h_fin - h_debut
-            heures, reste = divmod(duree.seconds, 3600)
-            minutes = reste // 60
-            duree_str = f"{heures:02}:{minutes:02}"
+            t1 = datetime.strptime(heure_debut.strip(), "%H:%M")
+            t2 = datetime.strptime(heure_fin.strip(), "%H:%M")
+            temps_op = str(t2 - t1)
 
-            nouvelle_ligne = pd.DataFrame([[
-                date, client, commandes, tissu, code_rouleau,
-                longueur, plis, heure_debut, heure_fin, duree_str
-            ]], columns=[
-                "Date", "Client", "Nombre de commandes", "Tissu", "Code rouleau",
-                "Longueur de matelas", "Nombre de plis", "Heure de début", "Heure de fin", "Durée opération"
-            ])
+            new_data = {
+                "Date": date,
+                "Client": client,
+                "N° Commande": commande,
+                "Tissu": tissu,
+                "Code Rouleau": code_rouleau,
+                "Longueur Matelas": longueur,
+                "Nombre de Plis": plis,
+                "Heure Début": heure_debut,
+                "Heure Fin": heure_fin,
+                "Temps Opération": temps_op
+            }
 
-            # Lecture de l'existant
-            try:
-                df = pd.read_excel(FICHIER)
-            except FileNotFoundError:
-                df = pd.DataFrame(columns=nouvelle_ligne.columns)
-
-            # Ajout et sauvegarde
-            df = pd.concat([df, nouvelle_ligne], ignore_index=True)
-            df.to_excel(FICHIER, index=False)
-
-            st.success(f"✅ Données enregistrées dans le fichier : {FICHIER}")
-            st.balloons()
-
+            save_entry(new_data)
+            st.success(f"Données enregistrées avec succès. Temps opération : {temps_op}")
         except Exception as e:
-            st.error(f"❌ Une erreur est survenue : {e}")
+            st.error(f"Erreur de format de l'heure : {e}")
+
+# === Résumé ===
+st.markdown("### Données enregistrées")
+df = load_data()
+st.dataframe(df)
