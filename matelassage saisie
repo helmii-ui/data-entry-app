@@ -1,0 +1,137 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOcYPJehPaMgej90sDle5wT",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/helmii-ui/data-entry-app/blob/main/matelassage%20saisie\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 6,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "hjRwdkwPXLgt",
+        "outputId": "5349ffbc-6cb4-4fa8-ac38-04478810756f"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Overwriting app.py\n"
+          ]
+        }
+      ],
+      "source": [
+        "%%writefile app.py\n",
+        "import streamlit as st\n",
+        "import pandas as pd\n",
+        "import os\n",
+        "from datetime import datetime\n",
+        "from pathlib import Path\n",
+        "\n",
+        "# === Config ===\n",
+        "DRIVE_PATH = \"/content/drive/MyDrive/matelas_data.xlsx\"\n",
+        "LOCAL_PATH = \"/content/matelas_data.xlsx\"\n",
+        "\n",
+        "# === Dropdown Options ===\n",
+        "CLIENTS = [\"HAVEP\", \"PWG\", \"Protec\",\"Samsonite\", \"Autre\"]\n",
+        "\n",
+        "# === Init Excel File ===\n",
+        "def init_excel():\n",
+        "    if not os.path.exists(DRIVE_PATH):\n",
+        "        df = pd.DataFrame(columns=[\n",
+        "            \"Date\", \"Client\", \"N° Commande\", \"Tissu\", \"Code Rouleau\",\n",
+        "            \"Longueur Matelas\", \"Nombre de Plis\", \"Heure Début\", \"Heure Fin\", \"Temps Opération\"\n",
+        "        ])\n",
+        "        df.to_excel(DRIVE_PATH, index=False)\n",
+        "    if not os.path.exists(LOCAL_PATH):\n",
+        "        pd.read_excel(DRIVE_PATH).to_excel(LOCAL_PATH, index=False)\n",
+        "\n",
+        "init_excel()\n",
+        "\n",
+        "# === Load Existing Data ===\n",
+        "def load_data():\n",
+        "    return pd.read_excel(DRIVE_PATH)\n",
+        "\n",
+        "# === Save Entry ===\n",
+        "def save_entry(data):\n",
+        "    df = load_data()\n",
+        "    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)\n",
+        "    df.to_excel(DRIVE_PATH, index=False)\n",
+        "    df.to_excel(LOCAL_PATH, index=False)\n",
+        "\n",
+        "# === Streamlit App ===\n",
+        "st.set_page_config(page_title=\"Saisie Matelas\", layout=\"centered\")\n",
+        "\n",
+        "st.markdown(\"<h1 style='color:green;'>Formulaire de Saisie</h1>\", unsafe_allow_html=True)\n",
+        "st.write(\"Remplissez les champs suivants pour enregistrer les opérations.\")\n",
+        "\n",
+        "with st.form(\"formulaire\"):\n",
+        "    date = st.date_input(\"Date\")\n",
+        "    client = st.selectbox(\"Client\", CLIENTS)\n",
+        "    commande = st.text_input(\"N° Commande\")\n",
+        "    tissu = st.selectbox(\"Tissu\", TISSUS)\n",
+        "    code_rouleau = st.text_input(\"Code Rouleau\")\n",
+        "    longueur = st.number_input(\"Longueur Matelas (m)\", step=0.1)\n",
+        "    plis = st.number_input(\"Nombre de Plis\", step=1)\n",
+        "    heure_debut = st.text_input(\"Heure Début (HH:MM)\")\n",
+        "    heure_fin = st.text_input(\"Heure Fin (HH:MM)\")\n",
+        "\n",
+        "    submitted = st.form_submit_button(\"Enregistrer\")\n",
+        "\n",
+        "    if submitted:\n",
+        "        try:\n",
+        "            t1 = datetime.strptime(heure_debut.strip(), \"%H:%M\")\n",
+        "            t2 = datetime.strptime(heure_fin.strip(), \"%H:%M\")\n",
+        "            temps_op = str(t2 - t1)\n",
+        "\n",
+        "            new_data = {\n",
+        "                \"Date\": date,\n",
+        "                \"Client\": client,\n",
+        "                \"N° Commande\": commande,\n",
+        "                \"Tissu\": tissu,\n",
+        "                \"Code Rouleau\": code_rouleau,\n",
+        "                \"Longueur Matelas\": longueur,\n",
+        "                \"Nombre de Plis\": plis,\n",
+        "                \"Heure Début\": heure_debut,\n",
+        "                \"Heure Fin\": heure_fin,\n",
+        "                \"Temps Opération\": temps_op\n",
+        "            }\n",
+        "\n",
+        "            save_entry(new_data)\n",
+        "            st.success(f\"Données enregistrées avec succès. Temps opération : {temps_op}\")\n",
+        "        except Exception as e:\n",
+        "            st.error(f\"Erreur de format de l'heure : {e}\")\n",
+        "\n",
+        "# === Résumé ===\n",
+        "st.markdown(\"### Données enregistrées\")\n",
+        "df = load_data()\n",
+        "st.dataframe(df)\n"
+      ]
+    }
+  ]
+}
