@@ -4,11 +4,14 @@ import json
 import os
 from datetime import datetime
 
-# Chemins des fichiers
+# Chemins
 DATA_FILE = "donnees.xlsx"
 CONFIG_FILE = "config.json"
 
-# Initialiser Excel si inexistant
+# Liste des clients prédéfinis
+clients_list = ["Decathlon", "Benetton", "Zara", "Adidas", "Autre"]
+
+# Initialisation fichier Excel
 if not os.path.exists(DATA_FILE):
     df_init = pd.DataFrame(columns=[
         "Date", "Client", "N° Commande", "Tissu", "Code Rouleau", 
@@ -17,7 +20,7 @@ if not os.path.exists(DATA_FILE):
     ])
     df_init.to_excel(DATA_FILE, index=False)
 
-# Lire config (nom + matricule autorisé)
+# Lire config.json
 default_operator = {"nom": "", "matricule": ""}
 if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, "r") as f:
@@ -25,15 +28,18 @@ if os.path.exists(CONFIG_FILE):
 
 st.title("Interface de Saisie - Atelier de Coupe")
 
-# 🔒 Authentification par matricule
+# Authentification par matricule
 input_matricule = st.text_input("Entrer votre matricule pour accéder au formulaire", type="password")
 
 if input_matricule == default_operator.get("matricule"):
     st.success("Accès autorisé.")
-    
+
     with st.form("form_saisie"):
         date = st.date_input("Date", value=datetime.now())
-        client = st.text_input("Client")
+        
+        # Liste déroulante client
+        client = st.selectbox("Client", options=clients_list)
+
         commande = st.text_input("N° Commande")
         tissu = st.text_input("Tissu")
         rouleau = st.text_input("Code Rouleau")
@@ -43,13 +49,12 @@ if input_matricule == default_operator.get("matricule"):
         fin = st.time_input("Heure Fin")
         temps = st.text_input("Temps de Matelas (hh:mm)")
 
-        # Préremplir nom + matricule
         operateur = st.text_input("Nom Opérateur", value=default_operator.get("nom", ""))
-        matricule = input_matricule  # sécurisé
+        matricule = input_matricule
 
         submitted = st.form_submit_button("Valider")
         if submitted:
-            # Enregistrement
+            # Ajouter ligne
             new_row = pd.DataFrame([[
                 date, client, commande, tissu, rouleau, longueur, plis, 
                 debut, fin, temps, operateur, matricule
@@ -66,7 +71,12 @@ if input_matricule == default_operator.get("matricule"):
             with open(CONFIG_FILE, "w") as f:
                 json.dump({"nom": operateur, "matricule": matricule}, f)
 
-            st.success("Données enregistrées avec succès !")
+            st.success("✅ Données enregistrées avec succès !")
+
+    # 🔎 Affichage du tableau
+    st.subheader("Données enregistrées")
+    df = pd.read_excel(DATA_FILE)
+    st.dataframe(df)
 
 else:
     if input_matricule:
