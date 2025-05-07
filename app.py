@@ -1,86 +1,62 @@
-%%writefile app.py
 import streamlit as st
 import pandas as pd
+import json
 import os
 from datetime import datetime
-from pathlib import Path
 
-# === Config ===
-DRIVE_PATH = "/content/drive/MyDrive/matelas_data.xlsx"
-LOCAL_PATH = "/content/matelas_data.xlsx"
+# Chemins des fichiers
+DATA_FILE = "donnees.xlsx"
+CONFIG_FILE = "config.json"
 
-# === Dropdown Options ===
-CLIENTS = ["Decathlon", "Benetton", "Zara", "Autre"]
-TISSUS = ["Coton", "Polyester", "Élasthanne", "Autre"]
+# Initialiser le fichier Excel si inexistant
+if not os.path.exists(DATA_FILE):
+    df_init = pd.DataFrame(columns=[
+        "Date", "Client", "N° Commande", "Tissu", "Code Rouleau", 
+        "Longueur Matelas", "Nombre de Plis", "Heure Début", 
+        "Heure Fin", "Temps Matelas", "Nom Opérateur", "Matricule"
+    ])
+    df_init.to_excel(DATA_FILE, index=False)
 
-# === Init Excel File ===
-def init_excel():
-    if not os.path.exists(DRIVE_PATH):
-        df = pd.DataFrame(columns=[
-            "Date", "Client", "N° Commande", "Tissu", "Code Rouleau",
-            "Longueur Matelas", "Nombre de Plis", "Heure Début", "Heure Fin", "Temps Opération"
-        ])
-        df.to_excel(DRIVE_PATH, index=False)
-    if not os.path.exists(LOCAL_PATH):
-        pd.read_excel(DRIVE_PATH).to_excel(LOCAL_PATH, index=False)
+# Lire config.json si disponible
+default_operator = {"nom": "", "matricule": ""}
+if os.path.exists(CONFIG_FILE):
+    with open(CONFIG_FILE, "r") as f:
+        default_operator = json.load(f)
 
-init_excel()
+st.title("Interface de Saisie - Atelier de Coupe")
 
-# === Load Existing Data ===
-def load_data():
-    return pd.read_excel(DRIVE_PATH)
-
-# === Save Entry ===
-def save_entry(data):
-    df = load_data()
-    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-    df.to_excel(DRIVE_PATH, index=False)
-    df.to_excel(LOCAL_PATH, index=False)
-
-# === Streamlit App ===
-st.set_page_config(page_title="Saisie Matelas", layout="centered")
-
-st.markdown("<h1 style='color:green;'>Formulaire de Saisie</h1>", unsafe_allow_html=True)
-st.write("Remplissez les champs suivants pour enregistrer les opérations.")
-
-with st.form("formulaire"):
-    date = st.date_input("Date")
-    client = st.selectbox("Client", CLIENTS)
+with st.form("form_saisie"):
+    date = st.date_input("Date", value=datetime.now())
+    client = st.text_input("Client")
     commande = st.text_input("N° Commande")
-    tissu = st.selectbox("Tissu", TISSUS)
-    code_rouleau = st.text_input("Code Rouleau")
-    longueur = st.number_input("Longueur Matelas (m)", step=0.1)
-    plis = st.number_input("Nombre de Plis", step=1)
-    heure_debut = st.text_input("Heure Début (HH:MM)")
-    heure_fin = st.text_input("Heure Fin (HH:MM)")
+    tissu = st.text_input("Tissu")
+    rouleau = st.text_input("Code Rouleau")
+    longueur = st.number_input("Longueur Matelas (m)", min_value=0.0, step=0.1)
+    plis = st.number_input("Nombre de Plis", min_value=1, step=1)
+    debut = st.time_input("Heure Début")
+    fin = st.time_input("Heure Fin")
+    temps = st.text_input("Temps de Matelas (hh:mm)")
+    
+    operateur = st.text_input("Nom Opérateur", value=default_operator.get("nom", ""))
+    matricule = st.text_input("Matricule", value=default_operator.get("matricule", ""))
 
-    submitted = st.form_submit_button("Enregistrer")
-
+    submitted = st.form_submit_button("✅ Valider")
     if submitted:
-        try:
-            t1 = datetime.strptime(heure_debut.strip(), "%H:%M")
-            t2 = datetime.strptime(heure_fin.strip(), "%H:%M")
-            temps_op = str(t2 - t1)
+        # Enregistrement des données
+        new_row = pd.DataFrame([[
+            date, client, commande, tissu, rouleau, longueur, plis, 
+            debut, fin, temps, operateur, matricule
+        ]], columns=[
+            "Date", "Client", "N° Commande", "Tissu", "Code Rouleau", 
+            "Longueur Matelas", "Nombre de Plis", "Heure Début", 
+            "Heure Fin", "Temps Matelas", "Nom Opérateur", "Matricule"
+        ])
+        df = pd.read_excel(DATA_FILE)
+        df = pd.concat([df, new_row], ignore_index=True)
+        df.to_excel(DATA_FILE, index=False)
 
-            new_data = {
-                "Date": date,
-                "Client": client,
-                "N° Commande": commande,
-                "Tissu": tissu,
-                "Code Rouleau": code_rouleau,
-                "Longueur Matelas": longueur,
-                "Nombre de Plis": plis,
-                "Heure Début": heure_debut,
-                "Heure Fin": heure_fin,
-                "Temps Opération": temps_op
-            }
+        # Mise à jour config.json
+        with open(CONFIG_FILE, "w") as f:
+            json.dump({"nom": operateur, "matricule": matricule}, f)
 
-            save_entry(new_data)
-            st.success(f"Données enregistrées avec succès. Temps opération : {temps_op}")
-        except Exception as e:
-            st.error(f"Erreur de format de l'heure : {e}")
-
-# === Résumé ===
-st.markdown("### Données enregistrées")
-df = load_data()
-st.dataframe(df)
+        st.success("✅ Données enregistrées avec succès !")
