@@ -8,8 +8,11 @@ from datetime import datetime
 DATA_FILE = "donnees.xlsx"
 CONFIG_FILE = "config.json"
 
+# Matricule du chef de coupe
+CHEF_MATRICULE = "chef123"  # Matricule du chef (à personnaliser)
+
 # Liste initiale des clients
-default_clients = ["HAVEP", "PWG", "Samsonite", "IS3", "MOERMAN","TOYOTA","Autre"]
+default_clients = ["Decathlon", "Benetton", "Zara", "Adidas", "Autre"]
 if "clients" not in st.session_state:
     st.session_state.clients = default_clients.copy()
 
@@ -28,13 +31,56 @@ if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, "r") as f:
         default_operator = json.load(f)
 
-st.title("Interface de Saisie - Atelier de Coupe")
+# Titre de l'interface
+st.title("Interface - Atelier de Coupe")
 
-# 🔒 Accès avec matricule
-input_matricule = st.text_input("Entrer votre matricule pour accéder au formulaire", type="password")
+# Authentification
+input_matricule = st.text_input("Entrer votre matricule", type="password")
 
-if input_matricule == default_operator.get("matricule"):
-    st.success("Accès autorisé.")
+# Accès chef de coupe
+if input_matricule == CHEF_MATRICULE:
+    st.success("Bienvenue Chef (accès lecture seule)")
+
+    # Filtrage des données
+    st.subheader("Filtrer les données")
+    client_filter = st.selectbox("Filtrer par client", options=["Tous"] + st.session_state.clients)
+    date_filter = st.date_input("Filtrer par date", value=datetime.today(), max_value=datetime.today())
+
+    # Lire les données
+    df = pd.read_excel(DATA_FILE)
+
+    # Filtrer les données en fonction des choix
+    if client_filter != "Tous":
+        df = df[df['Client'] == client_filter]
+
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df[df['Date'] == pd.to_datetime(date_filter)]
+
+    # Afficher les données filtrées
+    st.subheader("Données enregistrées")
+    st.dataframe(df)
+
+    # Option d'exportation
+    st.subheader("Exporter les données")
+    export_option = st.selectbox("Exporter en format", options=["Sélectionner", "CSV", "Excel"])
+    
+    if export_option == "CSV":
+        st.download_button(
+            label="Télécharger en CSV",
+            data=df.to_csv(index=False),
+            file_name="donnees_filtrees.csv",
+            mime="text/csv"
+        )
+    elif export_option == "Excel":
+        st.download_button(
+            label="Télécharger en Excel",
+            data=df.to_excel(index=False),
+            file_name="donnees_filtrees.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+elif input_matricule == default_operator.get("matricule"):
+    st.success("Accès opérateur autorisé.")
 
     with st.form("form_saisie"):
         date = st.date_input("Date", value=datetime.now())
