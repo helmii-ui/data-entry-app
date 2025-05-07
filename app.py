@@ -12,7 +12,7 @@ CONFIG_FILE = "config.json"
 CHEF_MATRICULE = "chef123"  # Matricule du chef (à personnaliser)
 
 # Liste initiale des clients
-default_clients = ["Decathlon", "Benetton", "Zara", "Adidas", "Autre"]
+default_clients = ["HAVEP", "PWG", "Protec", "IS3","MOERMAN","TOYOTA", "Autre"]
 if "clients" not in st.session_state:
     st.session_state.clients = default_clients.copy()
 
