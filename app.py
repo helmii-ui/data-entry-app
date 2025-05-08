@@ -4,16 +4,23 @@ import json
 import os
 from datetime import datetime
 
-# Remplacez cette URL par le lien CSV de votre Google Sheets publié
-csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtLtHBwA0ZdNl3KvBw-tbq_JxNsX_11hqWwu__0GSnKKsPkvPywL9SL65xBafbc4Dzj9rxJmcDFd9H/pub?gid=1995889627&single=true&output=csv"
+st.set_page_config(page_title="Lecture des données Excel", layout="centered")
+st.title("Données enregistrées (Excel local)")
 
-# Lire les données de Google Sheets dans un DataFrame
-df = pd.read_csv(csv_url)
+# Définir le nom du fichier Excel
+FILENAME = "data.xlsx"
 
-st.title("Saisie des données")
+# Vérifier si le fichier existe, sinon le créer avec colonnes vides
+if os.path.exists(FILENAME):
+    df = pd.read_excel(FILENAME)
+else:
+    df = pd.DataFrame(columns=["Date", "Client", "Matricule", "Tissu"])
+    df.to_excel(FILENAME, index=False)
 
-# Afficher le DataFrame dans Streamlit
-st.dataframe(df)
+# Afficher le contenu
+st.subheader("Données en direct depuis Excel")
+st.dataframe(df, use_container_width=True)
+
 
 # Fichiers
 DATA_FILE = "donnees.xlsx"
