@@ -4,6 +4,17 @@ import json
 import os
 from datetime import datetime
 
+# Remplacez cette URL par le lien CSV de votre Google Sheets publié
+csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtLtHBwA0ZdNl3KvBw-tbq_JxNsX_11hqWwu__0GSnKKsPkvPywL9SL65xBafbc4Dzj9rxJmcDFd9H/pubhtml?gid=1995889627&single=true"
+
+# Lire les données de Google Sheets dans un DataFrame
+df = pd.read_csv(csv_url)
+
+st.title("Données provenant de Google Sheets")
+
+# Afficher le DataFrame dans Streamlit
+st.dataframe(df)
+
 # Fichiers
 DATA_FILE = "donnees.xlsx"
 CONFIG_FILE = "config.json"
