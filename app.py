@@ -24,43 +24,6 @@ else:
 st.subheader("Données existantes")
 st.dataframe(df, use_container_width=True)
 
-# 3. Formulaire de saisie
-st.subheader("📝 Formulaire de saisie")
-
-with st.form("formulaire_saisie"):
-    date = st.date_input("Date", value=datetime.today())
-    client = st.selectbox("Client", ["Decathlon", "Benetton", "Zara", "Autre"])
-    num_commande = st.text_input("N° Commande")
-    tissu = st.text_input("Tissu")
-    code_rouleau = st.text_input("Code Rouleau")
-    longueur_matelas = st.number_input("Longueur Matelas (m)", min_value=0.0, step=0.1)
-    nb_plis = st.number_input("Nombre de Plis", min_value=1, step=1)
-    heure_debut = st.time_input("Heure Début")
-    heure_fin = st.time_input("Heure Fin")
-    temps_operation = st.text_input("Temps de l'opération")
-    matricule = st.text_input("Matricule opérateur")
-    nom_operateur = st.text_input("Nom opérateur")
-
-    submitted = st.form_submit_button("Enregistrer")
-
-    if submitted:
-        if not matricule or not nom_operateur:
-            st.warning("❗ Matricule et nom de l'opérateur sont obligatoires.")
-        else:
-            new_row = {
-                "Date": date,
-                "Client": client,
-                "N° Commande": num_commande,
-                "Tissu": tissu,
-                "Code Rouleau": code_rouleau,
-                "Longueur Matelas": longueur_matelas,
-                "Nombre de Plis": nb_plis,
-                "Heure Début": heure_debut.strftime("%H:%M"),
-                "Heure Fin": heure_fin.strftime("%H:%M"),
-                "Temps Opération": temps_operation,
-                "Matricule": matricule,
-                "Nom Opérateur": nom_operateur
-            }
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
             df.to_excel(FILENAME, index=False)
             st.success("✅ Données enregistrées avec succès !")
