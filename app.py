@@ -10,7 +10,7 @@ csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtLtHBwA0ZdNl3KvBw-t
 # Lire les données de Google Sheets dans un DataFrame
 df = pd.read_csv(csv_url)
 
-st.title("Données provenant de Google Sheets")
+st.title("Saisie des données")
 
 # Afficher le DataFrame dans Streamlit
 st.dataframe(df)
