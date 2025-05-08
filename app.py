@@ -4,31 +4,6 @@ import json
 import os
 from datetime import datetime
 
-st.set_page_config(page_title="Saisie de données", layout="centered")
-st.title("📄 Interface de saisie de données (Excel local)")
-
-FILENAME = "data.xlsx"
-
-# 1. Charger ou créer le fichier Excel
-if os.path.exists(FILENAME):
-    df = pd.read_excel(FILENAME)
-else:
-    df = pd.DataFrame(columns=[
-        "Date", "Client", "N° Commande", "Tissu", "Code Rouleau", 
-        "Longueur Matelas", "Nombre de Plis", "Heure Début", "Heure Fin", 
-        "Temps Opération", "Matricule", "Nom Opérateur"
-    ])
-    df.to_excel(FILENAME, index=False)
-
-# 2. Afficher les données existantes
-st.subheader("Données existantes")
-st.dataframe(df, use_container_width=True)
-
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            df.to_excel(FILENAME, index=False)
-            st.success("✅ Données enregistrées avec succès !")
-
-
 # Fichiers
 DATA_FILE = "donnees.xlsx"
 CONFIG_FILE = "config.json"
