@@ -14,7 +14,9 @@ FILENAME = "data.xlsx"
 if os.path.exists(FILENAME):
     df = pd.read_excel(FILENAME)
 else:
-    df = pd.DataFrame(columns=["Date", "Client", "Matricule", "Tissu"])
+    df = pd.DataFrame(columns=["Date", "Client", "N° Commande", "Tissu", "Code Rouleau", 
+        "Longueur Matelas", "Nombre de Plis", "Heure Début", 
+        "Heure Fin", "Temps Matelas", "Nom Opérateur", "Matricule""])
     df.to_excel(FILENAME, index=False)
 
 # Afficher le contenu
