@@ -84,7 +84,7 @@ df.to_csv("donnees.csv", index=False, encoding="utf-8-sig")
 df.to_excel("donnees.xlsx", index=False)            
 
 # Accès Opérateur
-elif input_matricule == default_operator.get("matricule"):
+else if input_matricule == default_operator.get("matricule"):
     st.success("Accès opérateur autorisé.")
 
     # Initialiser session_state pour chaque champ
