@@ -69,6 +69,7 @@ if input_matricule == CHEF_MATRICULE:
         )
     elif export_option == "Excel":
         df.to_excel("donnees_temp_export.xlsx", index=False)
+        df.to_csv("donnees.csv", index=False, encoding="utf-8-sig")  # <- Ajoute cette ligne
         with open("donnees_temp_export.xlsx", "rb") as f:
             st.download_button(
                 label="Télécharger en Excel",
