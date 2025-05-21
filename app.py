@@ -77,6 +77,11 @@ if input_matricule == CHEF_MATRICULE:
                 file_name=f"donnees_filtrees_{date_filter}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+# Save to CSV
+df.to_csv("donnees.csv", index=False, encoding="utf-8-sig")
+
+# OR save to Excel
+df.to_excel("donnees.xlsx", index=False)            
 
 # Accès Opérateur
 elif input_matricule == default_operator.get("matricule"):
